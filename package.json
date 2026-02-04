@@ -30,6 +30,8 @@
   "bugs": {
     "url": "https://github.com/jay-d-tyler/homebridge-hue-transitions/issues"
   },
+  "homepage": "https://github.com/jay-d-tyler/homebridge-hue-transitions#readme",
+  "private": false,
   "engines": {
     "node": "^18.0.0 || ^20.0.0 || ^22.0.0",
     "homebridge": "^1.6.0 || ^2.0.0-beta.0"
