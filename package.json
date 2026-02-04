@@ -1,6 +1,7 @@
 {
   "name": "@jay-d-tyler/homebridge-hue-transitions",
-  "version": "1.0.3",
+  "displayName": "Hue Transitions",
+  "version": "1.0.4",
   "description": "Homebridge plugin to control Philips Hue scenes with configurable transition durations",
   "main": "dist/index.js",
   "type": "module",
