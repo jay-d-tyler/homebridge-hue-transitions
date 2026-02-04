@@ -1,0 +1,55 @@
+# Source files
+src/
+test/
+
+# Config files
+tsconfig.json
+jest.config.js
+eslint.config.js
+nodemon.json
+.eslintrc*
+.prettierrc*
+
+# Development
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+coverage/
+*.test.ts
+*.spec.ts
+
+# Build artifacts
+*.tsbuildinfo
+.eslintcache
+
+# Git
+.git/
+.gitignore
+.github/
+
+# CI/CD
+.travis.yml
+.circleci/
+azure-pipelines.yml
+
+# Documentation (keep README.md)
+docs/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+node_modules/

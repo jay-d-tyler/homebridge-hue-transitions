@@ -1,0 +1,154 @@
+{
+  "pluginAlias": "HueTransitions",
+  "pluginType": "platform",
+  "singular": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "title": "Name",
+        "type": "string",
+        "default": "Hue Transitions",
+        "required": true,
+        "description": "Name to display in the Homebridge log"
+      },
+      "bridgeIp": {
+        "title": "Bridge IP Address",
+        "type": "string",
+        "format": "ipv4",
+        "placeholder": "192.168.1.100",
+        "description": "IP address of your Hue bridge (leave empty for auto-discovery)"
+      },
+      "apiKey": {
+        "title": "API Key",
+        "type": "string",
+        "placeholder": "Your Hue API key / username",
+        "description": "API key for your Hue bridge. See the README for instructions on how to create one."
+      },
+      "scenes": {
+        "title": "Configured Scenes",
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "title": "Scene ID",
+              "type": "string",
+              "required": true,
+              "placeholder": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+              "description": "The unique ID of the scene from your Hue bridge"
+            },
+            "name": {
+              "title": "Scene Name",
+              "type": "string",
+              "required": true,
+              "placeholder": "Evening ambiance",
+              "description": "Display name for this scene in HomeKit"
+            },
+            "transitionDuration": {
+              "title": "Transition Duration (minutes)",
+              "type": "integer",
+              "default": 30,
+              "minimum": 1,
+              "maximum": 60,
+              "required": true,
+              "description": "How long the transition to this scene should take (1-60 minutes)"
+            }
+          }
+        },
+        "description": "List of Hue scenes to expose in HomeKit with custom transition durations"
+      },
+      "pollingInterval": {
+        "title": "Polling Interval (milliseconds)",
+        "type": "integer",
+        "default": 60000,
+        "minimum": 60000,
+        "maximum": 300000,
+        "description": "How often to check scene status (60000-300000ms, default 60000ms = 1 minute)"
+      },
+      "debug": {
+        "title": "Enable Debug Logging",
+        "type": "boolean",
+        "default": false,
+        "description": "Enable detailed debug logging for troubleshooting"
+      }
+    }
+  },
+  "layout": [
+    {
+      "type": "flex",
+      "flex-flow": "row wrap",
+      "items": [
+        {
+          "type": "flex",
+          "flex-flow": "column",
+          "items": ["name"],
+          "flex": "1 1 50%"
+        }
+      ]
+    },
+    {
+      "type": "fieldset",
+      "title": "Hue Bridge Configuration",
+      "expandable": false,
+      "items": [
+        {
+          "type": "help",
+          "helpvalue": "<p class='help-block'>If you don't have an API key yet:</p><ol><li>Leave the API Key field empty</li><li>Save the configuration and restart Homebridge</li><li>Check the Homebridge logs for instructions on creating an API key</li><li>Press the link button on your Hue bridge</li><li>Follow the instructions in the log to create your API key</li><li>Add the API key here and restart Homebridge</li></ol>"
+        },
+        "bridgeIp",
+        "apiKey"
+      ]
+    },
+    {
+      "type": "fieldset",
+      "title": "Scene Configuration",
+      "expandable": false,
+      "items": [
+        {
+          "type": "help",
+          "helpvalue": "<p class='help-block'>To find your scene IDs:</p><ol><li>Ensure Bridge IP and API Key are configured above</li><li>Restart Homebridge and check the logs</li><li>The plugin will list all available scenes with their IDs</li><li>Copy the scene IDs you want to use into the configuration below</li></ol><p class='help-block'><strong>Note:</strong> Only scenes configured here will appear in HomeKit. Each scene will be exposed as a switch that activates the scene with your chosen transition duration.</p>"
+        },
+        {
+          "key": "scenes",
+          "type": "array",
+          "title": "Scenes with Transition",
+          "items": [
+            {
+              "type": "div",
+              "displayFlex": true,
+              "flex-direction": "row",
+              "items": [
+                {
+                  "key": "scenes[].id",
+                  "flex": "1 1 40%",
+                  "placeholder": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                },
+                {
+                  "key": "scenes[].name",
+                  "flex": "1 1 30%",
+                  "placeholder": "Scene name"
+                },
+                {
+                  "key": "scenes[].transitionDuration",
+                  "flex": "1 1 30%",
+                  "placeholder": "30"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "fieldset",
+      "title": "Advanced Settings",
+      "expandable": true,
+      "expanded": false,
+      "items": [
+        "pollingInterval",
+        "debug"
+      ]
+    }
+  ]
+}

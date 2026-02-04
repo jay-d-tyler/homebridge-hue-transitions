@@ -1,0 +1,57 @@
+{
+  "name": "@jay-d-tyler/homebridge-hue-transitions",
+  "version": "1.0.0",
+  "description": "Homebridge plugin to control Philips Hue scenes with configurable transition durations",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "rimraf ./dist && tsc",
+    "lint": "eslint src/**/*.ts --max-warnings=0",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
+    "watch": "npm run build && npm link && nodemon",
+    "prepublishOnly": "npm run lint && npm run build"
+  },
+  "keywords": [
+    "homebridge-plugin",
+    "philips-hue",
+    "hue",
+    "transitions",
+    "scenes",
+    "smart-home",
+    "homekit"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jay-d-tyler/homebridge-hue-transitions.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jay-d-tyler/homebridge-hue-transitions/issues"
+  },
+  "engines": {
+    "node": "^20.18.0 || ^22.10.0 || ^24.0.0",
+    "homebridge": "^1.8.0 || ^2.0.0-beta.0"
+  },
+  "author": "Jay Tyler",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "axios": "^1.7.9",
+    "axios-retry": "^4.5.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.10.2",
+    "eslint": "^9.17.0",
+    "globals": "^15.13.0",
+    "homebridge": "^2.0.0-beta.55",
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.9",
+    "rimraf": "^6.0.1",
+    "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.1"
+  }
+}
