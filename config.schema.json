@@ -2,6 +2,8 @@
   "pluginAlias": "HueTransitions",
   "pluginType": "platform",
   "singular": true,
+  "headerDisplay": "Homebridge plugin for Philips Hue scenes with configurable transition durations. For help and documentation please see the [GitHub repository](https://github.com/jay-d-tyler/homebridge-hue-transitions).",
+  "footerDisplay": "Check your Homebridge logs after saving to see all available scenes with their IDs.",
   "schema": {
     "type": "object",
     "properties": {
