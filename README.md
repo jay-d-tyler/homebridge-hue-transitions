@@ -41,48 +41,46 @@ npm install -g @jay-d-tyler/homebridge-hue-transitions
 
 ## Configuration
 
-### Step 1: Get Your Hue Bridge IP Address
+### Quick Setup (Recommended)
 
-The plugin can auto-discover your bridge, but for best results, configure it manually:
+1. **Install the plugin** via Homebridge Config UI X (search for "Hue Transitions")
 
+2. **Get your Hue API key:**
+   - Open the plugin settings
+   - The plugin will auto-discover your Hue bridge
+   - Follow the on-screen instructions to create an API key:
+     - Press the link button on your Hue bridge
+     - Run the provided command
+     - Copy the API key into the settings
+
+3. **Add scenes using the Scene Selector:**
+   - After entering your API key, click **Save**
+   - Click the **Scene Selector** button (top-right corner)
+   - Browse all available scenes from your Hue bridge
+   - Click **Add Scene** for each scene you want in HomeKit
+   - Adjust transition durations (1-60 minutes) as needed
+
+That's it! Your scenes will appear in HomeKit as switches.
+
+### Manual Configuration
+
+If you prefer manual configuration or need to discover your bridge IP:
+
+**Get Bridge IP:**
 ```bash
-# Discover your Hue bridge
 curl https://discovery.meethue.com
 ```
 
-### Step 2: Create an API Key
-
-**Option A: Via the plugin (automatic prompts)**
-
-1. Leave the `apiKey` field empty in your config
-2. Restart Homebridge
-3. Check the Homebridge logs for instructions
-4. Press the link button on your Hue bridge
-5. Run the command shown in the logs
-6. Copy the API key from the response into your config
-
-**Option B: Manual creation**
-
+**Create API Key:**
 1. Press the link button on your Hue bridge
 2. Within 30 seconds, run:
    ```bash
    curl -k -X POST https://YOUR_BRIDGE_IP/api \
      -d '{"devicetype":"homebridge-hue-transitions#homebridge"}'
    ```
-3. Copy the `username` value from the response - this is your API key
+3. Copy the `username` value - this is your API key
 
-### Step 3: Find Your Scene IDs
-
-1. Configure your bridge IP and API key in the plugin settings
-2. Restart Homebridge
-3. Check the logs - the plugin will list all available scenes with their IDs
-4. Copy the scene IDs you want to use
-
-### Step 4: Configure Your Scenes
-
-Add your scenes to the plugin configuration with your desired transition durations.
-
-#### Example Configuration
+### Example Configuration (if configuring manually)
 
 ```json
 {
@@ -124,6 +122,14 @@ Add your scenes to the plugin configuration with your desired transition duratio
 | `debug` | No | `false` | Enable detailed debug logging |
 
 #### Scene Configuration
+
+**Using Scene Selector (Recommended):**
+- Click the "Scene Selector" button in the Homebridge Config UI X
+- Browse and add scenes with one click
+- Scenes are automatically added with default 30-minute transitions
+- Edit transition durations directly in the config afterward
+
+**Manual Configuration:**
 
 Each scene in the `scenes` array has these properties:
 

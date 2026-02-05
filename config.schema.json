@@ -97,7 +97,7 @@
       "items": [
         {
           "type": "help",
-          "helpvalue": "<p class='help-block'>If you don't have an API key yet:</p><ol><li>Leave the API Key field empty</li><li>Save the configuration and restart Homebridge</li><li>Check the Homebridge logs for instructions on creating an API key</li><li>Press the link button on your Hue bridge</li><li>Follow the instructions in the log to create your API key</li><li>Add the API key here and restart Homebridge</li></ol>"
+          "helpvalue": "<p class='help-block'><strong>Quick Setup:</strong></p><ol><li>The plugin will auto-discover your Hue bridge</li><li>Check the logs for instructions to create an API key</li><li>Press the link button on your Hue bridge</li><li>Run the command from the logs to get your API key</li><li>Enter the API key above and click Save</li></ol>"
         },
         "bridgeIp",
         "apiKey"
@@ -110,7 +110,7 @@
       "items": [
         {
           "type": "help",
-          "helpvalue": "<p class='help-block'>To find your scene IDs:</p><ol><li>Ensure Bridge IP and API Key are configured above</li><li>Restart Homebridge and check the logs</li><li>The plugin will list all available scenes with their IDs</li><li>Copy the scene IDs you want to use into the configuration below</li></ol><p class='help-block'><strong>Note:</strong> Only scenes configured here will appear in HomeKit. Each scene will be exposed as a switch that activates the scene with your chosen transition duration.</p>"
+          "helpvalue": "<p class='help-block'><strong>Easy Method:</strong> After saving your bridge configuration above, click the <strong>'Scene Selector'</strong> button in the top-right corner to browse and add scenes with one click!</p><p class='help-block'><strong>Manual Method:</strong> If you prefer, you can manually add scenes below. Scene IDs will be listed in the Homebridge logs after restart.</p><p class='help-block'>Each scene will appear in HomeKit as a switch that activates the scene with your chosen transition duration (1-60 minutes).</p>"
         },
         {
           "key": "scenes",
