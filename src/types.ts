@@ -6,7 +6,7 @@ export interface HueTransitionsPlatformConfig {
   name?: string;
   bridgeIp?: string;
   apiKey?: string;
-  scenes: SceneConfig[];
+  scenes: Partial<SceneConfig>[];
   pollingInterval?: number;
   debug?: boolean;
 }

@@ -89,7 +89,9 @@ export class HueTransitionsPlatform extends EventEmitter implements DynamicPlatf
       this.log.info(`Found ${allScenes.length} scenes on Hue bridge`);
 
       // Filter out any invalid scene configs (empty or incomplete entries)
-      const validScenes = this.config.scenes.filter(s => s && s.id && s.name);
+      const validScenes = this.config.scenes.filter((s): s is SceneConfig =>
+        Boolean(s.id && s.name && s.transitionDuration),
+      );
 
       // Check if any valid scenes are configured
       if (validScenes.length === 0) {
@@ -290,8 +292,12 @@ export class HueTransitionsPlatform extends EventEmitter implements DynamicPlatf
       // Create a map for quick lookup
       const sceneMap = new Map<string, HueScene>(scenes.map(s => [s.id, s]));
 
-      // Check each configured scene
-      for (const sceneConfig of this.config.scenes) {
+      // Check each configured scene (filter out any invalid entries)
+      const validScenes = this.config.scenes.filter((s): s is SceneConfig =>
+        Boolean(s.id && s.name && s.transitionDuration),
+      );
+
+      for (const sceneConfig of validScenes) {
         const scene = sceneMap.get(sceneConfig.id);
 
         if (scene) {
