@@ -88,10 +88,26 @@ export class HueTransitionsPlatform extends EventEmitter implements DynamicPlatf
       const allScenes = await this.apiClient.getScenes();
       this.log.info(`Found ${allScenes.length} scenes on Hue bridge`);
 
+      // Check if any scenes are configured
+      if (!this.config.scenes || this.config.scenes.length === 0) {
+        this.log.warn('No scenes configured. Please add scenes in the plugin configuration.');
+        this.log.info('Available scenes:');
+        for (const scene of allScenes) {
+          this.log.info(`  - "${scene.metadata.name}" (ID: ${scene.id})`);
+        }
+        return;
+      }
+
       // Register configured scenes
       const configuredSceneIds = new Set(this.config.scenes.map(s => s.id));
 
       for (const sceneConfig of this.config.scenes) {
+        // Validate scene config
+        if (!sceneConfig.id || !sceneConfig.name) {
+          this.log.warn('Skipping scene with missing id or name in configuration');
+          continue;
+        }
+
         // Verify scene exists on bridge
         const sceneExists = allScenes.some(s => s.id === sceneConfig.id);
 
