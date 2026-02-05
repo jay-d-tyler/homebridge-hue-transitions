@@ -34,31 +34,28 @@
           "type": "object",
           "properties": {
             "id": {
-              "title": "Scene ID",
+              "title": "Scene",
               "type": "string",
               "required": true,
-              "placeholder": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-              "description": "The unique ID of the scene from your Hue bridge"
+              "description": "Select a scene from your Hue bridge"
             },
             "name": {
-              "title": "Scene Name",
+              "title": "Display Name",
               "type": "string",
               "required": true,
-              "placeholder": "Evening ambiance",
-              "description": "Display name for this scene in HomeKit"
+              "description": "Name shown in HomeKit (auto-filled from scene selection)"
             },
             "transitionDuration": {
-              "title": "Transition Duration (minutes)",
+              "title": "Transition (minutes)",
               "type": "integer",
               "default": 30,
               "minimum": 1,
               "maximum": 60,
               "required": true,
-              "description": "How long the transition to this scene should take (1-60 minutes)"
+              "description": "Duration for gradual transition (1-60 minutes)"
             }
           }
-        },
-        "description": "List of Hue scenes to expose in HomeKit with custom transition durations"
+        }
       },
       "pollingInterval": {
         "title": "Polling Interval (milliseconds)",
@@ -109,7 +106,7 @@
       "items": [
         {
           "type": "help",
-          "helpvalue": "<p class='help-block'><strong>Finding Scene IDs:</strong></p><ol><li>Save your bridge configuration above</li><li>Restart Homebridge</li><li>Check the logs - all available scenes with their IDs will be listed</li><li>Add scenes below using the IDs from the logs</li></ol><p class='help-block'>Each scene will appear in HomeKit as a switch that activates the scene with your chosen transition duration (1-60 minutes).</p>"
+          "helpvalue": "<div id='scene-helper'><p class='help-block'><strong>Add Your Scenes:</strong></p><button type='button' class='btn btn-sm btn-primary' id='fetch-scenes-btn' style='margin-bottom: 15px;'>Load Available Scenes</button><div id='scene-loader' style='display:none; margin: 15px 0;'><div class='spinner-border spinner-border-sm'></div> Loading scenes from bridge...</div><div id='scene-error' class='alert alert-danger' style='display:none; margin-top: 10px;'></div><div id='available-scenes' style='display:none; margin-top: 15px;'><p class='help-block'><strong>Click a scene to add it:</strong></p><div id='scenes-list' style='max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 10px;'></div></div></div><p class='help-block' style='margin-top: 15px;'>Each scene will appear in HomeKit as a switch. When activated, lights will gradually transition to the scene over your chosen duration.</p><script>(function(){const btn=document.getElementById('fetch-scenes-btn');const loader=document.getElementById('scene-loader');const error=document.getElementById('scene-error');const available=document.getElementById('available-scenes');const list=document.getElementById('scenes-list');if(!btn)return;btn.onclick=async function(){btn.disabled=true;loader.style.display='block';error.style.display='none';available.style.display='none';try{const response=await fetch('/api/config-editor/platform/HueTransitions');if(!response.ok)throw new Error('Failed to fetch config');const configs=await response.json();if(!configs||configs.length===0){throw new Error('Plugin not configured. Please add bridge IP and API key above first.');}const config=configs[0];if(!config.bridgeIp||!config.apiKey){throw new Error('Please configure bridge IP and API key above first.');}const logsResp=await fetch('/api/logs/download');const logs=await logsResp.text();const sceneMatches=logs.match(/- \"([^\"]+)\" \\(ID: ([^)]+)\\)/g);if(!sceneMatches||sceneMatches.length===0){throw new Error('No scenes found in logs. Please restart Homebridge first.');}const scenes=sceneMatches.map(m=>{const match=m.match(/- \"([^\"]+)\" \\(ID: ([^)]+)\\)/);return{name:match[1],id:match[2]};});loader.style.display='none';available.style.display='block';list.innerHTML='';scenes.forEach(scene=>{const div=document.createElement('div');div.style.cssText='padding:8px;margin:5px 0;border:1px solid #ccc;border-radius:4px;cursor:pointer;background:#f8f9fa;';div.innerHTML=`<strong>${scene.name}</strong><br><small style='color:#666;font-family:monospace;'>${scene.id}</small>`;div.onclick=function(){const formData=homebridge.formData;if(!formData.scenes)formData.scenes=[];formData.scenes.push({id:scene.id,name:scene.name,transitionDuration:30});homebridge.updateFormData(formData);homebridge.toast.success('Added '+scene.name,'Success');};div.onmouseover=function(){this.style.background='#e9ecef';};div.onmouseout=function(){this.style.background='#f8f9fa';};list.appendChild(div);});}catch(err){loader.style.display='none';error.style.display='block';error.textContent=err.message;}finally{btn.disabled=false;}}})();</script>"
         },
         {
           "key": "scenes",
