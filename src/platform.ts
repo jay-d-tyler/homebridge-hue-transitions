@@ -89,7 +89,7 @@ export class HueTransitionsPlatform extends EventEmitter implements DynamicPlatf
       this.log.info(`Found ${allScenes.length} scenes on Hue bridge`);
 
       // Check if any scenes are configured
-      if (!this.config.scenes || this.config.scenes.length === 0) {
+      if (this.config.scenes.length === 0) {
         this.log.warn('No scenes configured. Please add scenes in the plugin configuration.');
         this.log.info('Available scenes:');
         for (const scene of allScenes) {
