@@ -1,5 +1,6 @@
 import axios, { type AxiosInstance, type AxiosError } from 'axios';
 import axiosRetry from 'axios-retry';
+import https from 'https';
 import { API_CONFIG } from './settings.js';
 import type {
   HueBridgeDiscoveryResponse,
@@ -15,11 +16,6 @@ export class HueApiClient {
   private readonly client: AxiosInstance;
 
   constructor(bridgeIp: string, apiKey: string) {
-
-    // Note: We import https synchronously for the agent
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const https = require('https') as typeof import('https');
-
     this.client = axios.create({
       baseURL: `https://${bridgeIp}/clip/${API_CONFIG.API_VERSION}`,
       timeout: API_CONFIG.REQUEST_TIMEOUT,
