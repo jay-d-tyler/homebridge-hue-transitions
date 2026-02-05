@@ -53,12 +53,11 @@ npm install -g @jay-d-tyler/homebridge-hue-transitions
      - Run the provided command
      - Copy the API key into the settings
 
-3. **Add scenes using the Scene Selector:**
-   - After entering your API key, click **Save**
-   - Click the **Scene Selector** button (top-right corner)
-   - Browse all available scenes from your Hue bridge
-   - Click **Add Scene** for each scene you want in HomeKit
-   - Adjust transition durations (1-60 minutes) as needed
+3. **Add scenes:**
+   - After entering your API key, click **Save** and restart Homebridge
+   - Check the Homebridge logs - all available scenes with their IDs will be listed
+   - Copy the scene IDs you want
+   - Add scenes in the plugin configuration with your desired transition durations (1-60 minutes)
 
 That's it! Your scenes will appear in HomeKit as switches.
 
@@ -122,14 +121,6 @@ curl https://discovery.meethue.com
 | `debug` | No | `false` | Enable detailed debug logging |
 
 #### Scene Configuration
-
-**Using Scene Selector (Recommended):**
-- Click the "Scene Selector" button in the Homebridge Config UI X
-- Browse and add scenes with one click
-- Scenes are automatically added with default 30-minute transitions
-- Edit transition durations directly in the config afterward
-
-**Manual Configuration:**
 
 Each scene in the `scenes` array has these properties:
 

@@ -88,9 +88,12 @@ export class HueTransitionsPlatform extends EventEmitter implements DynamicPlatf
       const allScenes = await this.apiClient.getScenes();
       this.log.info(`Found ${allScenes.length} scenes on Hue bridge`);
 
-      // Check if any scenes are configured
-      if (this.config.scenes.length === 0) {
-        this.log.warn('No scenes configured. Please add scenes in the plugin configuration.');
+      // Filter out any invalid scene configs (empty or incomplete entries)
+      const validScenes = this.config.scenes.filter(s => s && s.id && s.name);
+
+      // Check if any valid scenes are configured
+      if (validScenes.length === 0) {
+        this.log.warn('No scenes configured. Please add scenes using the Scene Selector or manually in the plugin configuration.');
         this.log.info('Available scenes:');
         for (const scene of allScenes) {
           this.log.info(`  - "${scene.metadata.name}" (ID: ${scene.id})`);
@@ -99,14 +102,9 @@ export class HueTransitionsPlatform extends EventEmitter implements DynamicPlatf
       }
 
       // Register configured scenes
-      const configuredSceneIds = new Set(this.config.scenes.map(s => s.id));
+      const configuredSceneIds = new Set(validScenes.map(s => s.id));
 
-      for (const sceneConfig of this.config.scenes) {
-        // Validate scene config
-        if (!sceneConfig.id || !sceneConfig.name) {
-          this.log.warn('Skipping scene with missing id or name in configuration');
-          continue;
-        }
+      for (const sceneConfig of validScenes) {
 
         // Verify scene exists on bridge
         const sceneExists = allScenes.some(s => s.id === sceneConfig.id);
@@ -151,36 +149,31 @@ export class HueTransitionsPlatform extends EventEmitter implements DynamicPlatf
    */
   private async initializeApiClient(): Promise<void> {
     try {
-      // Check if we have bridge IP and API key
-      if (!this.config.bridgeIp || !this.config.apiKey) {
-        this.log.warn('Bridge IP or API key not configured');
+      // Check if bridge IP needs auto-discovery
+      if (!this.config.bridgeIp) {
+        this.log.info('Bridge IP not configured - attempting auto-discovery...');
+        const bridges = await HueApiClient.discoverBridges();
 
-        // Try to discover bridge if IP not provided
-        if (!this.config.bridgeIp) {
-          this.log.info('Attempting to discover Hue bridge...');
-          const bridges = await HueApiClient.discoverBridges();
-
-          if (bridges.length === 0) {
-            this.log.error('No Hue bridges found on network');
-            this.log.error('Please configure bridgeIp manually in config.json');
-            return;
-          }
-
-          this.config.bridgeIp = bridges[0].internalipaddress;
-          this.log.info(`Discovered Hue bridge at ${this.config.bridgeIp}`);
-        }
-
-        // If no API key, provide instructions
-        if (!this.config.apiKey) {
-          this.log.error('No API key configured');
-          this.log.error('To create an API key:');
-          this.log.error('1. Press the link button on your Hue bridge');
-          this.log.error('2. Run the following command within 30 seconds:');
-          this.log.error(`   curl -k -X POST https://${this.config.bridgeIp}/api ` +
-            `-d '{"devicetype":"homebridge-hue-transitions#homebridge"}'`);
-          this.log.error('3. Copy the "username" value from the response into config.json as "apiKey"');
+        if (bridges.length === 0) {
+          this.log.error('✗ Auto-discovery failed: No Hue bridges found on network');
+          this.log.error('Please manually configure your bridge IP address in the plugin settings');
           return;
         }
+
+        this.config.bridgeIp = bridges[0].internalipaddress;
+        this.log.info(`✓ Auto-discovery successful! Found Hue bridge at ${this.config.bridgeIp}`);
+      }
+
+      // Check if API key is configured
+      if (!this.config.apiKey) {
+        this.log.warn('API key not configured');
+        this.log.info('To create an API key:');
+        this.log.info('1. Press the link button on your Hue bridge');
+        this.log.info('2. Run the following command within 30 seconds:');
+        this.log.info(`   curl -k -X POST https://${this.config.bridgeIp}/api ` +
+          `-d '{"devicetype":"homebridge-hue-transitions#homebridge"}'`);
+        this.log.info('3. Copy the "username" value from the response and add it as "apiKey" in the plugin settings');
+        return;
       }
 
       // Create API client

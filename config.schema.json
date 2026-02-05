@@ -2,9 +2,8 @@
   "pluginAlias": "HueTransitions",
   "pluginType": "platform",
   "singular": true,
-  "customUi": true,
   "headerDisplay": "Homebridge plugin for Philips Hue scenes with configurable transition durations. For help and documentation please see the [GitHub repository](https://github.com/jay-d-tyler/homebridge-hue-transitions).",
-  "footerDisplay": "**Tip:** After configuring your bridge details above, click the 'Scene Selector' button in the top-right corner to easily browse and add scenes from your Hue bridge!",
+  "footerDisplay": "**Tip:** After configuring your bridge details and saving, restart Homebridge and check the logs to see all available scenes with their IDs.",
   "schema": {
     "type": "object",
     "properties": {
@@ -110,7 +109,7 @@
       "items": [
         {
           "type": "help",
-          "helpvalue": "<p class='help-block'><strong>Easy Method:</strong> After saving your bridge configuration above, click the <strong>'Scene Selector'</strong> button in the top-right corner to browse and add scenes with one click!</p><p class='help-block'><strong>Manual Method:</strong> If you prefer, you can manually add scenes below. Scene IDs will be listed in the Homebridge logs after restart.</p><p class='help-block'>Each scene will appear in HomeKit as a switch that activates the scene with your chosen transition duration (1-60 minutes).</p>"
+          "helpvalue": "<p class='help-block'><strong>Finding Scene IDs:</strong></p><ol><li>Save your bridge configuration above</li><li>Restart Homebridge</li><li>Check the logs - all available scenes with their IDs will be listed</li><li>Add scenes below using the IDs from the logs</li></ol><p class='help-block'>Each scene will appear in HomeKit as a switch that activates the scene with your chosen transition duration (1-60 minutes).</p>"
         },
         {
           "key": "scenes",
