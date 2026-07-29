@@ -5,8 +5,9 @@ import type {
   Logger,
 } from 'homebridge';
 import type { HueTransitionsPlatform } from './platform.js';
-import type { HueApiClient } from './api.js';
+import type { HueApi } from './api.js';
 import type { SceneConfig } from './types.js';
+import { MOMENTARY_SWITCH_RESET_DELAY } from './settings.js';
 
 /**
  * Scene Switch Accessory
@@ -15,19 +16,18 @@ import type { SceneConfig } from './types.js';
 export class HueSceneAccessory {
   private service: Service;
   private readonly sceneConfig: SceneConfig;
-  private readonly api: HueApiClient;
   private readonly log: Logger;
   private isActivating = false;
-  private lastActivated: number | null = null;
+  private isOn = false;
+  private resetTimer: NodeJS.Timeout | null = null;
 
   constructor(
     private readonly platform: HueTransitionsPlatform,
     private readonly accessory: PlatformAccessory,
     sceneConfig: SceneConfig,
-    api: HueApiClient,
+    private readonly getApiClient: () => HueApi | null,
   ) {
     this.sceneConfig = sceneConfig;
-    this.api = api;
     this.log = platform.log;
 
     // Set accessory information
@@ -52,48 +52,14 @@ export class HueSceneAccessory {
       .onGet(this.getOn.bind(this))
       .onSet(this.setOn.bind(this));
 
-    // Listen for scene updates from the platform
-    this.platform.on('sceneUpdated', this.handleSceneUpdate.bind(this));
-
     this.log.debug(`Scene accessory initialized: ${sceneConfig.name} (${sceneConfig.id})`);
   }
 
   /**
-   * Get the current state of the switch
-   * We consider the scene "on" if it was recently activated (within the last 30 seconds)
+   * Get the current state of the momentary switch.
    */
-  async getOn(): Promise<CharacteristicValue> {
-    try {
-      // Check if scene was recently activated
-      if (this.lastActivated !== null) {
-        const timeSinceActivation = Date.now() - this.lastActivated;
-        // Consider the scene "on" for 30 seconds after activation
-        if (timeSinceActivation < 30000) {
-          return true;
-        }
-      }
-
-      // Try to determine if this scene is currently active by checking the scene status
-      try {
-        const scene = await this.api.getScene(this.sceneConfig.id);
-        const isActive = scene.status?.active === 'static' || scene.status?.active === 'dynamic_palette';
-
-        if (this.platform.config.debug) {
-          this.log.debug(`Scene ${this.sceneConfig.name} status: ${scene.status?.active ?? 'unknown'}, isActive: ${isActive}`);
-        }
-
-        return isActive;
-      } catch (error) {
-        // If we can't fetch the scene status, fall back to the time-based check
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        this.log.warn(`Failed to get scene status for ${this.sceneConfig.name}: ${errorMessage}`);
-        return false;
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      this.log.error(`Error getting state for scene ${this.sceneConfig.name}: ${errorMessage}`);
-      throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
-    }
+  getOn(): CharacteristicValue {
+    return this.isOn;
   }
 
   /**
@@ -113,6 +79,11 @@ export class HueSceneAccessory {
     try {
       if (isOn) {
         this.isActivating = true;
+        const api = this.getApiClient();
+
+        if (api === null) {
+          throw new Error('Hue bridge is not connected yet');
+        }
 
         // Convert transition duration from minutes to milliseconds
         const transitionMs = this.sceneConfig.transitionDuration * 60 * 1000;
@@ -122,16 +93,14 @@ export class HueSceneAccessory {
         );
 
         // Activate the scene with transition
-        await this.api.recallScene(this.sceneConfig.id, transitionMs);
+        await api.recallScene(this.sceneConfig.id, transitionMs);
 
-        // Record activation time
-        this.lastActivated = Date.now();
+        this.isOn = true;
+        this.scheduleReset();
 
         this.log.info(`Successfully activated scene "${this.sceneConfig.name}"`);
       } else {
-        // Turning off a scene doesn't do anything - scenes are momentary
-        // But we'll reset our activation tracking
-        this.lastActivated = null;
+        this.resetSwitch();
 
         if (this.platform.config.debug) {
           this.log.debug(`Scene ${this.sceneConfig.name} turned off (no action taken)`);
@@ -142,9 +111,7 @@ export class HueSceneAccessory {
       this.log.error(`Failed to activate scene ${this.sceneConfig.name}: ${errorMessage}`);
 
       // Revert the switch state in HomeKit
-      setTimeout(() => {
-        this.service.updateCharacteristic(this.platform.Characteristic.On, !isOn);
-      }, 100);
+      this.resetSwitch();
 
       throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
     } finally {
@@ -152,17 +119,31 @@ export class HueSceneAccessory {
     }
   }
 
-  /**
-   * Handle scene updates from the platform polling
-   */
-  private handleSceneUpdate(sceneId: string, isActive: boolean): void {
-    if (sceneId === this.sceneConfig.id) {
-      if (this.platform.config.debug) {
-        this.log.debug(`Updating scene ${this.sceneConfig.name} state to ${isActive}`);
-      }
+  private scheduleReset(): void {
+    if (this.resetTimer !== null) {
+      clearTimeout(this.resetTimer);
+    }
 
-      // Update the switch characteristic
-      this.service.updateCharacteristic(this.platform.Characteristic.On, isActive);
+    this.resetTimer = setTimeout(() => {
+      this.resetTimer = null;
+      this.resetSwitch();
+    }, MOMENTARY_SWITCH_RESET_DELAY);
+  }
+
+  private resetSwitch(): void {
+    if (this.resetTimer !== null) {
+      clearTimeout(this.resetTimer);
+      this.resetTimer = null;
+    }
+
+    this.isOn = false;
+    this.service.updateCharacteristic(this.platform.Characteristic.On, false);
+  }
+
+  destroy(): void {
+    if (this.resetTimer !== null) {
+      clearTimeout(this.resetTimer);
+      this.resetTimer = null;
     }
   }
 

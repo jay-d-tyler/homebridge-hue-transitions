@@ -21,6 +21,13 @@
         "placeholder": "192.168.1.100",
         "description": "IP address of your Hue bridge (leave empty for auto-discovery)"
       },
+      "bridgeId": {
+        "title": "Bridge ID",
+        "type": "string",
+        "pattern": "^([0-9A-Fa-f]{16}|([0-9A-Fa-f]{2}[:-]){7}[0-9A-Fa-f]{2})$",
+        "placeholder": "001788FFFE123456",
+        "description": "Optional bridge ID used to verify the Hue bridge TLS certificate. Auto-discovery fills this automatically."
+      },
       "apiKey": {
         "title": "API Key",
         "type": "string",
@@ -72,6 +79,12 @@
         "type": "boolean",
         "default": false,
         "description": "Enable detailed debug logging for troubleshooting"
+      },
+      "allowInsecureTls": {
+        "title": "Allow Insecure TLS",
+        "type": "boolean",
+        "default": false,
+        "description": "Disable certificate verification only for a legacy Hue bridge that still uses a self-signed certificate"
       }
     }
   },
@@ -98,6 +111,7 @@
           "helpvalue": "<p class='help-block'><strong>Quick Setup:</strong></p><ol><li>The plugin will auto-discover your Hue bridge</li><li>Check the logs for instructions to create an API key</li><li>Press the link button on your Hue bridge</li><li>Run the command from the logs to get your API key</li><li>Enter the API key above and click Save</li></ol>"
         },
         "bridgeIp",
+        "bridgeId",
         "apiKey"
       ]
     },
@@ -148,7 +162,8 @@
       "expanded": false,
       "items": [
         "pollingInterval",
-        "debug"
+        "debug",
+        "allowInsecureTls"
       ]
     }
   ]

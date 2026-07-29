@@ -1,6 +1,10 @@
 import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import globals from 'globals';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const configDirectory = path.dirname(fileURLToPath(import.meta.url));
 
 export default tseslint.config(
   eslint.configs.recommended,
@@ -13,7 +17,7 @@ export default tseslint.config(
       },
       parserOptions: {
         projectService: true,
-        tsconfigRootDir: import.meta.dirname,
+        tsconfigRootDir: configDirectory,
       },
     },
     rules: {

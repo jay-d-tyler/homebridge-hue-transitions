@@ -5,10 +5,12 @@ export interface HueTransitionsPlatformConfig {
   platform: string;
   name?: string;
   bridgeIp?: string;
+  bridgeId?: string;
   apiKey?: string;
   scenes: Partial<SceneConfig>[];
   pollingInterval?: number;
   debug?: boolean;
+  allowInsecureTls?: boolean;
 }
 
 /**
@@ -35,7 +37,7 @@ export interface HueBridgeDiscoveryResponse {
 export interface HueAuthResponse {
   success?: {
     username: string;
-  }[];
+  };
   error?: {
     type: number;
     address: string;

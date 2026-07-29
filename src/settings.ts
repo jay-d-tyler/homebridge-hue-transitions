@@ -14,9 +14,30 @@ export const PLUGIN_NAME = '@jay-d-tyler/homebridge-hue-transitions';
 export const API_CONFIG = {
   DISCOVERY_URL: 'https://discovery.meethue.com',
   API_VERSION: 'v2',
-  LINK_BUTTON_TIMEOUT: 30000, // 30 seconds
   REQUEST_TIMEOUT: 10000, // 10 seconds
+  RETRIES: 3,
 };
+
+/**
+ * Signify's private certificate authority for Hue Bridges.
+ *
+ * Hue Bridge certificates use the bridge ID as their common name, so callers
+ * must validate that identity rather than the configured IP address.
+ */
+export const HUE_BRIDGE_CA_CERTIFICATE = `-----BEGIN CERTIFICATE-----
+MIICMjCCAdigAwIBAgIUO7FSLbaxikuXAljzVaurLXWmFw4wCgYIKoZIzj0EAwIw
+OTELMAkGA1UEBhMCTkwxFDASBgNVBAoMC1BoaWxpcHMgSHVlMRQwEgYDVQQDDAty
+b290LWJyaWRnZTAiGA8yMDE3MDEwMTAwMDAwMFoYDzIwMzgwMTE5MDMxNDA3WjA5
+MQswCQYDVQQGEwJOTDEUMBIGA1UECgwLUGhpbGlwcyBIdWUxFDASBgNVBAMMC3Jv
+b3QtYnJpZGdlMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEjNw2tx2AplOf9x86
+aTdvEcL1FU65QDxziKvBpW9XXSIcibAeQiKxegpq8Exbr9v6LBnYbna2VcaK0G22
+jOKkTqOBuTCBtjAPBgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQEAwIBhjAdBgNV
+HQ4EFgQUZ2ONTFrDT6o8ItRnKfqWKnHFGmQwdAYDVR0jBG0wa4AUZ2ONTFrDT6o8
+ItRnKfqWKnHFGmShPaQ7MDkxCzAJBgNVBAYTAk5MMRQwEgYDVQQKDAtQaGlsaXBz
+IEh1ZTEUMBIGA1UEAwwLcm9vdC1icmlkZ2WCFDuxUi22sYpLlwJY81Wrqy11phcO
+MAoGCCqGSM49BAMCA0gAMEUCIEBYYEOsa07TH7E5MJnGw557lVkORgit2Rm1h3B2
+sFgDAiEA1Fj/C3AN5psFMjo0//mrQebo0eKd3aWRx+pQY08mk48=
+-----END CERTIFICATE-----`;
 
 /**
  * Polling Configuration
@@ -35,3 +56,9 @@ export const TRANSITION_CONFIG = {
   MIN_DURATION: 1, // 1 minute
   MAX_DURATION: 60, // 60 minutes
 };
+
+/**
+ * A Hue scene is an action, not a resource with an off state. Keep the
+ * HomeKit switch on only long enough to acknowledge a successful trigger.
+ */
+export const MOMENTARY_SWITCH_RESET_DELAY = 1000;

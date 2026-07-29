@@ -9,9 +9,10 @@ A Homebridge plugin that enables Philips Hue scenes with configurable transition
 
 - 🎨 Expose Philips Hue scenes as HomeKit switches
 - ⏱️ Configure custom transition durations (1-60 minutes) per scene
-- 🔄 Automatic scene status synchronization
+- 🔄 Automatic bridge reconnection and scene availability refresh
 - 🌉 Auto-discovery of Hue bridges
 - 🔐 Simple API key setup with guided instructions
+- 🛡️ Authenticated TLS using the Philips Hue Bridge certificate authority
 - 📊 Comprehensive logging and error handling
 - 🧪 Fully tested with 80%+ code coverage
 - 🚀 Built with modern TypeScript and Homebridge 2.0 features
@@ -88,6 +89,7 @@ curl https://discovery.meethue.com
       "platform": "HueTransitions",
       "name": "Hue Transitions",
       "bridgeIp": "192.168.1.100",
+      "bridgeId": "001788FFFE123456",
       "apiKey": "your-api-key-here",
       "scenes": [
         {
@@ -102,7 +104,8 @@ curl https://discovery.meethue.com
         }
       ],
       "pollingInterval": 60000,
-      "debug": false
+      "debug": false,
+      "allowInsecureTls": false
     }
   ]
 }
@@ -115,10 +118,17 @@ curl https://discovery.meethue.com
 | `platform` | Yes | - | Must be `HueTransitions` |
 | `name` | No | `Hue Transitions` | Display name in Homebridge logs |
 | `bridgeIp` | No | Auto-discover | IP address of your Hue bridge |
+| `bridgeId` | No | Auto-discover | Bridge ID used to verify the bridge TLS certificate |
 | `apiKey` | Yes | - | API key for your Hue bridge |
 | `scenes` | Yes | `[]` | Array of scene configurations (see below) |
-| `pollingInterval` | No | `60000` | Status polling interval in milliseconds (60000-300000) |
+| `pollingInterval` | No | `60000` | Scene refresh and reconnection interval in milliseconds (60000-300000) |
 | `debug` | No | `false` | Enable detailed debug logging |
+| `allowInsecureTls` | No | `false` | Disable certificate verification only for a legacy self-signed bridge |
+
+When auto-discovery is used, the plugin fills both `bridgeIp` and `bridgeId`
+for the running Homebridge process. If you configure the IP manually, adding
+the bridge ID provides strict certificate identity verification. The ID is
+shown in discovery results and contains 16 hexadecimal characters.
 
 #### Scene Configuration
 
@@ -137,7 +147,7 @@ Once configured:
 1. The plugin will create a switch in HomeKit for each configured scene
 2. Activate the switch to trigger the scene with your configured transition
 3. The lights will gradually transition to the scene over your specified duration
-4. The switch will show as "on" while the transition is active
+4. The virtual switch automatically resets after one second so it can be triggered again
 
 ### Example Automations
 
@@ -166,17 +176,19 @@ This plugin uses the modern Hue API v2, which provides:
 - Native support for transition durations
 - Future-proof integration with latest Hue features
 
-### Polling
+### Refresh and Recovery
 
-The plugin polls your Hue bridge at regular intervals (default: 1 minute) to keep scene status synchronized. This ensures HomeKit reflects the current state of your scenes.
+The plugin refreshes the bridge scene list at regular intervals (default: one
+minute). This detects removed scenes and retries discovery or connectivity
+after a temporary bridge outage. Cached HomeKit triggers remain usable while
+the bridge reconnects instead of requiring a Homebridge restart.
 
-### Scene Status
+### Scene Trigger State
 
-A scene is considered "active" when:
-- It was activated by this plugin within the last 30 seconds, OR
-- The Hue API reports the scene as `static` or `dynamic_palette`
-
-Scenes automatically turn "off" in HomeKit after 30 seconds or when another scene is activated.
+Hue scenes are actions and do not have a meaningful "off" operation. Each
+accessory therefore behaves as a momentary trigger: it turns on after Hue
+accepts the recall request and resets one second later. Turning it off manually
+does not change the lights.
 
 ## Troubleshooting
 
@@ -193,6 +205,17 @@ If you see authentication errors:
 1. Verify your API key is correct
 2. Try creating a new API key
 3. Ensure you pressed the link button before creating the API key
+
+### TLS Certificate Error
+
+Modern Hue bridges use certificates issued by the Philips Hue Bridge
+certificate authority. If you configured the bridge manually, verify that
+`bridgeId` matches the bridge you intended to use.
+
+Some legacy bridges may still present a self-signed certificate. Confirm that
+the bridge firmware is current first. If it cannot receive a signed
+certificate, enable `allowInsecureTls` explicitly; this disables bridge
+identity verification and should remain a last resort.
 
 ### Scenes Not Appearing
 
@@ -269,6 +292,7 @@ homebridge-hue-transitions/
 │   └── settings.ts        # Constants and configuration
 ├── test/
 │   ├── api.test.ts        # API client tests
+│   ├── index.test.ts      # Plugin registration test
 │   ├── platform.test.ts   # Platform tests
 │   └── sceneAccessory.test.ts  # Accessory tests
 ├── config.schema.json     # Homebridge Config UI schema
@@ -302,6 +326,15 @@ Inspired by the need for gradual scene transitions in HomeKit, something that Ph
 - **Homebridge Discord:** [#plugins channel](https://discord.gg/homebridge)
 
 ## Changelog
+
+### 2.1.0
+
+- Make scene accessories reliable momentary triggers
+- Preserve configured cached accessories through temporary bridge outages
+- Remove stale accessories when scenes are deleted or disappear
+- Add authenticated Hue Bridge TLS with an explicit legacy fallback
+- Validate configuration at runtime and prevent malformed polling intervals
+- Restore the test, coverage, CI, audit, and publishing gates
 
 ### 1.0.0
 

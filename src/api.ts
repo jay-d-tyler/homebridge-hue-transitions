@@ -1,7 +1,10 @@
 import axios, { type AxiosInstance, type AxiosError } from 'axios';
 import axiosRetry from 'axios-retry';
 import https from 'https';
-import { API_CONFIG } from './settings.js';
+import {
+  API_CONFIG,
+  HUE_BRIDGE_CA_CERTIFICATE,
+} from './settings.js';
 import type {
   HueBridgeDiscoveryResponse,
   HueAuthResponse,
@@ -12,29 +15,98 @@ import type {
   SceneRecallRequest,
 } from './types.js';
 
+export interface HueApiClientOptions {
+  bridgeId?: string;
+  allowInsecureTls?: boolean;
+}
+
+export interface HueApi {
+  getScenes(): Promise<HueScene[]>;
+  getLights(): Promise<HueLight[]>;
+  getScene(sceneId: string): Promise<HueScene>;
+  recallScene(sceneId: string, transitionMs?: number): Promise<void>;
+  testConnection(): Promise<boolean>;
+}
+
+const HUE_BRIDGE_ID_PATTERN = /^[0-9A-F]{16}$/;
+
+export function normalizeBridgeId(bridgeId: string): string {
+  return bridgeId.replaceAll(':', '').replaceAll('-', '').trim().toUpperCase();
+}
+
+export function createHueHttpsAgent(options: HueApiClientOptions = {}): https.Agent {
+  if (options.allowInsecureTls === true) {
+    return new https.Agent({ rejectUnauthorized: false });
+  }
+
+  const expectedBridgeId = options.bridgeId === undefined
+    ? undefined
+    : normalizeBridgeId(options.bridgeId);
+
+  return new https.Agent({
+    ca: HUE_BRIDGE_CA_CERTIFICATE,
+    rejectUnauthorized: true,
+    servername: expectedBridgeId,
+    checkServerIdentity: (_hostname, certificate) => {
+      const commonName: unknown = (
+        certificate.subject as unknown as Record<string, unknown>
+      ).CN;
+
+      if (typeof commonName !== 'string') {
+        return new Error('Hue bridge certificate does not contain a common name');
+      }
+
+      const certificateBridgeId = normalizeBridgeId(commonName);
+
+      if (!HUE_BRIDGE_ID_PATTERN.test(certificateBridgeId)) {
+        return new Error('Hue bridge certificate has an invalid common name');
+      }
+
+      if (expectedBridgeId !== undefined && certificateBridgeId !== expectedBridgeId) {
+        return new Error(
+          `Hue bridge certificate identity mismatch: expected ${expectedBridgeId}, received ${certificateBridgeId}`,
+        );
+      }
+
+      return undefined;
+    },
+  });
+}
+
 export class HueApiClient {
   private readonly client: AxiosInstance;
 
-  constructor(bridgeIp: string, apiKey: string) {
+  constructor(
+    bridgeIp: string,
+    apiKey: string,
+    options: HueApiClientOptions = {},
+    client?: AxiosInstance,
+  ) {
+    if (client !== undefined) {
+      this.client = client;
+      return;
+    }
+
     this.client = axios.create({
       baseURL: `https://${bridgeIp}/clip/${API_CONFIG.API_VERSION}`,
       timeout: API_CONFIG.REQUEST_TIMEOUT,
       headers: {
         'hue-application-key': apiKey,
       },
-      // Hue bridge uses self-signed certificates
-      httpsAgent: new https.Agent({
-        rejectUnauthorized: false,
-      }),
+      httpsAgent: createHueHttpsAgent(options),
     });
 
-    // Configure retry logic
+    // Reads are safe to retry. Scene recall PUTs are actions and must not be
+    // repeated after an ambiguous network failure.
     axiosRetry(this.client, {
-      retries: 3,
+      retries: API_CONFIG.RETRIES,
       retryDelay: (retryCount: number) => axiosRetry.exponentialDelay(retryCount),
       retryCondition: (error) => {
-        return axiosRetry.isNetworkOrIdempotentRequestError(error) ||
-          (error.response !== undefined && error.response.status >= 500);
+        const method = error.config?.method?.toLowerCase();
+        return method === 'get' && (
+          axiosRetry.isNetworkError(error) ||
+          (error.response !== undefined && error.response.status >= 500)
+        );
       },
     });
   }
@@ -59,7 +131,12 @@ export class HueApiClient {
   /**
    * Create a new API key (requires link button press)
    */
-  static async createApiKey(bridgeIp: string, appName: string, deviceName: string): Promise<string> {
+  static async createApiKey(
+    bridgeIp: string,
+    appName: string,
+    deviceName: string,
+    options: HueApiClientOptions = {},
+  ): Promise<string> {
     try {
       const response = await axios.post<HueAuthResponse[]>(
         `https://${bridgeIp}/api`,
@@ -68,19 +145,17 @@ export class HueApiClient {
         },
         {
           timeout: API_CONFIG.REQUEST_TIMEOUT,
-          httpsAgent: new (await import('https')).Agent({
-            rejectUnauthorized: false,
-          }),
+          httpsAgent: createHueHttpsAgent(options),
         },
       );
 
-      const result = response.data[0];
+      const result: HueAuthResponse | undefined = response.data.at(0);
 
-      if (result.success && result.success.length > 0) {
-        return result.success[0].username;
+      if (result?.success?.username) {
+        return result.success.username;
       }
 
-      if (result.error) {
+      if (result?.error) {
         throw new Error(result.error.description);
       }
 
@@ -138,7 +213,9 @@ export class HueApiClient {
    */
   async getScene(sceneId: string): Promise<HueScene> {
     try {
-      const response = await this.client.get<HueSingleResourceResponse<HueScene>>(`/resource/scene/${sceneId}`);
+      const response = await this.client.get<HueSingleResourceResponse<HueScene>>(
+        `/resource/scene/${encodeURIComponent(sceneId)}`,
+      );
 
       if (response.data.errors.length > 0) {
         throw new Error(`Hue API errors: ${response.data.errors.map(e => e.description).join(', ')}`);
@@ -176,7 +253,7 @@ export class HueApiClient {
       }
 
       const response = await this.client.put<HueSingleResourceResponse<HueScene>>(
-        `/resource/scene/${sceneId}`,
+        `/resource/scene/${encodeURIComponent(sceneId)}`,
         request,
       );
 
