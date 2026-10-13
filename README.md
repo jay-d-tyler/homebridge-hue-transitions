@@ -350,6 +350,10 @@ Inspired by the need for gradual scene transitions in HomeKit, something that Ph
 
 ## Changelog
 
+### 2.1.1
+
+- Update Axios to 1.20.0 to resolve dependency security advisories
+
 ### 2.1.0
 
 - Make scene accessories reliable momentary triggers
