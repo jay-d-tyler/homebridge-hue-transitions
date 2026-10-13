@@ -47,15 +47,18 @@ npm install -g @jay-d-tyler/homebridge-hue-transitions
 1. **Install the plugin** via Homebridge Config UI X (search for "Hue Transitions")
 
 2. **Get your Hue API key:**
-   - Open the plugin settings
-   - The plugin will auto-discover your Hue bridge
-   - Follow the on-screen instructions to create an API key:
-     - Press the link button on your Hue bridge
-     - Run the provided command
-     - Copy the API key into the settings
+   - Find the bridge IP first, using the manual discovery request below or your
+     router's device list. The plugin returns before auto-discovery when no
+     `apiKey` is configured; its setup guidance is printed in Homebridge logs.
+   - Press the bridge link button and follow the manual key-creation steps
+     below, including the TLS limitation.
+   - Copy the returned `username` into `apiKey` in the plugin settings.
 
 3. **Add scenes:**
-   - After entering your API key, click **Save** and restart Homebridge
+   - After entering your API key, click **Save** and restart Homebridge. With a
+     key configured, the plugin can auto-discover a bridge if `bridgeIp` is
+     omitted. With multiple bridges it uses the first result; configure
+     `bridgeIp` and `bridgeId` explicitly to select the bridge paired with the key.
    - Check the Homebridge logs - all available scenes with their IDs will be listed
    - Copy the scene IDs you want
    - Add scenes in the plugin configuration with your desired transition durations (1-60 minutes)
@@ -71,6 +74,10 @@ If you prefer manual configuration or need to discover your bridge IP:
 curl https://discovery.meethue.com
 ```
 
+The discovery response supplies `internalipaddress` and `id`. Verify that they
+belong to the intended bridge. Manual `bridgeIp` configuration is supported;
+include its `bridgeId` to pin the expected certificate identity.
+
 **Create API Key:**
 1. Press the link button on your Hue bridge
 2. Within 30 seconds, run:
@@ -78,7 +85,23 @@ curl https://discovery.meethue.com
    curl -k -X POST https://YOUR_BRIDGE_IP/api \
      -d '{"devicetype":"homebridge-hue-transitions#homebridge"}'
    ```
-3. Copy the `username` value - this is your API key
+3. Copy the `username` value - this is your API key. Keep it out of logs, issues,
+   screenshots, and version control.
+
+The `-k` example matches the existing setup command printed by the plugin, but
+it disables TLS certificate and hostname verification. Encryption alone does
+not establish that the responding device is the intended bridge, and the
+returned key could be intercepted by an impersonating endpoint. Use this
+shortcut only on a trusted local network after independently checking the
+bridge address; it is not an authenticated pairing check. A verified TLS setup
+requires the Hue Bridge CA and expected bridge identity, not simply removing
+`-k` from an IP-address URL.
+
+This setup command does not change the plugin's runtime TLS settings. Runtime
+requests verify the Hue Bridge CA by default and, when `bridgeId` is supplied
+or discovered, compare the certificate identity with that ID. Leave
+`allowInsecureTls` disabled except for the explicit legacy fallback described
+below.
 
 ### Example Configuration (if configuring manually)
 
